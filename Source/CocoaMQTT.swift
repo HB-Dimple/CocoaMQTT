@@ -132,6 +132,8 @@ protocol CocoaMQTTClient {
     func publish(_ message: CocoaMQTTMessage) -> Int
 
     /* PUBLISH/SUBSCRIBE */
+        func manualACKMessage(messageID:UInt16,qos:CocoaMQTTQoS)
+
 }
 
 
@@ -513,6 +515,17 @@ public class CocoaMQTT: NSObject, CocoaMQTTClient {
         unsubscriptionsWaitingAck[msgid] = topics
         send(frame, tag: Int(msgid))
     }
+    
+        //ManualACKMessage
+    public func manualACKMessage(messageID:UInt16,qos:CocoaMQTTQoS)
+    {
+        if qos == .qos1 {
+            puback(FrameType.puback, msgid: messageID)
+        } else if qos == .qos2 {
+            puback(FrameType.pubrec, msgid: messageID)
+        }
+    }
+
 }
 
 // MARK: CocoaMQTTDeliverProtocol
@@ -687,11 +700,11 @@ extension CocoaMQTT: CocoaMQTTReaderDelegate {
         delegate?.mqtt(self, didReceiveMessage: message, id: publish.msgid)
         didReceiveMessage(self, message, publish.msgid)
         
-        if message.qos == .qos1 {
-            puback(FrameType.puback, msgid: publish.msgid)
-        } else if message.qos == .qos2 {
-            puback(FrameType.pubrec, msgid: publish.msgid)
-        }
+//         if message.qos == .qos1 {
+//             puback(FrameType.puback, msgid: publish.msgid)
+//         } else if message.qos == .qos2 {
+//             puback(FrameType.pubrec, msgid: publish.msgid)
+//         }
     }
 
     func didReceive(_ reader: CocoaMQTTReader, puback: FramePubAck) {
